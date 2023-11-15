@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 The dataset contains information about users, including their age, estimated salary, and whether they made a purchase ('Purchased' column).
 
 ```{python}
+#| echo: false
 df_social=pd.read_csv('./Social_Network_Ads.csv')
 df_social.head(5)
 ```
@@ -45,7 +46,6 @@ df_social.head(5)
 We start by visualizing the relationship between age, estimated salary, and purchase decisions using a scatter plot.
 
 ```{python}
-#| jupyter: {outputs_hidden: true}
 plt.scatter(df_social[df_social['Purchased']==0]['Age'],df_social[df_social['Purchased']==0]['EstimatedSalary'], color='green', label='not purchased')
 plt.scatter(df_social[df_social['Purchased']==1]['Age'],df_social[df_social['Purchased']==1]['EstimatedSalary'], color='blue', label='purchased')
 plt.xlabel('Age')
@@ -58,8 +58,8 @@ plt.legend()
 Initially, we attempted to solve the classification problem using the K-Nearest Neighbors (KNN) algorithm. However, after viewing the decision regions, it became apparent that KNN did not provide a clear separation between the classes.
 
 ```{python}
+y=df_social['Purchased'].values
 X=df_social.drop(['Purchased'], axis=1).values
-y=df_social.iloc[:,-2:-1].values
 y=y.ravel()
 ```
 
@@ -78,7 +78,6 @@ knn_social.score(X_test,y_test)
 ```
 
 ```{python}
-#| jupyter: {outputs_hidden: true}
 from mlxtend.plotting import plot_decision_regions
 fig = plot_decision_regions(X_test, y_test,clf=knn_social, legend=2)
 plt.title('KNN')
@@ -86,10 +85,9 @@ plt.show()
 ```
 
 ```{python}
-#| jupyter: {outputs_hidden: true}
 n_neighbors_values = [4, 10, 12, 15]
 
-fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+fig, axes = plt.subplots(2, 2, figsize=(8, 8))
 axes = axes.flatten()
 
 # Iterate over values for n_neighbors_values
@@ -102,7 +100,7 @@ for i, n_neighbors in enumerate(n_neighbors_values):
     axes[i].set_title(f'KNN, n_neighbors={n_neighbors}')
     
     score = knn_social.score(X_test, y_test)
-    axes[i].text(0.85, 0.9, f'Score: {score:.2f}', transform=axes[i].transAxes, fontsize=10, verticalalignment='top')
+    axes[i].text(0.75, 0.75, f'Score: {score:.2f}', transform=axes[i].transAxes, fontsize=10, verticalalignment='top')
 
 plt.tight_layout()
 plt.show()
@@ -113,7 +111,6 @@ plt.show()
 To find a better model, we decided to explore other classification algorithms such as Decision Tree, Random Forest, and Support Vector Classifier (SVC).
 
 ```{python}
-#| jupyter: {outputs_hidden: true}
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
@@ -139,8 +136,7 @@ model_names = [
 We visualized the decision regions and calculated accuracy scores for each model. Notably, the Support Vector Classifier (SVC) stood out with a higher accuracy score and a distinct decision boundary.
 
 ```{python}
-#| jupyter: {outputs_hidden: true}
-fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+fig, axes = plt.subplots(2, 2, figsize=(8, 8))
 axes = axes.flatten()
 
 # Iterate over models
@@ -154,7 +150,7 @@ for i, (model, model_name) in enumerate(zip(models, model_names)):
     
     # Display the score inside the plot
     score = model.score(X_test, y_test)
-    axes[i].text(0.85, 0.9, f'Score: {score:.2f}', transform=axes[i].transAxes, fontsize=10, verticalalignment='top')
+    axes[i].text(0.75, 0.75, f'Score: {score:.2f}', transform=axes[i].transAxes, fontsize=10, verticalalignment='top')
 
 
 plt.tight_layout()
