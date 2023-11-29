@@ -17,7 +17,7 @@ jupyter:
     name: python3
 ---
 
-In this classification analysis, we aim to predict whether users will make a purchase based on their age and estimated salary.  Let's start by loading the dataset and taking a quick look at the first five rows.
+In this classification analysis, we aim to predict whether users will make a purchase based on their age and estimated salary. Let's start by loading the dataset and taking a quick look at the first five rows.
 
 ```{python}
 #Loading libraries
