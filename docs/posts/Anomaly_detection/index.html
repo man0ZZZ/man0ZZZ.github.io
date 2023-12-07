@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Manoj Subedi">
-<meta name="dcterms.date" content="2023-11-29">
+<meta name="dcterms.date" content="2023-12-06">
 
 <title>man0ZZZ.github.io - Anomlay detection for a production plant</title>
 <style>
@@ -21,6 +21,40 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -61,6 +95,9 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
 
 <link rel="stylesheet" href="../../styles.css">
@@ -111,6 +148,8 @@ ul.task-list li input[type="checkbox"] {
       <h1 class="title">Anomlay detection for a production plant</h1>
                                 <div class="quarto-categories">
                 <div class="quarto-category">code</div>
+                <div class="quarto-category">anomaly detection</div>
+                <div class="quarto-category">principal component analysis</div>
               </div>
                   </div>
   </div>
@@ -128,7 +167,7 @@ ul.task-list li input[type="checkbox"] {
       <div>
       <div class="quarto-title-meta-heading">Published</div>
       <div class="quarto-title-meta-contents">
-        <p class="date">November 29, 2023</p>
+        <p class="date">December 6, 2023</p>
       </div>
     </div>
     
@@ -146,8 +185,639 @@ ul.task-list li input[type="checkbox"] {
 
 
 
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>In the complex realm of manufacturing, ensuring the continuous health of machinery is paramount. This blog post delves into the realm of anomaly detection within the context of eight run-to-failure experiments from a production plant. The objective is clear: identify anomalies in machine behavior using a strategic combination of feature selection, autoencoder-based clustering, and quantization errors.</p>
+</section>
+<section id="loading-and-preprocessing-the-datasets" class="level1">
+<h1>Loading and Preprocessing the Datasets</h1>
+<p>We with the loading of datasets from eight run-to-failure experiments. These datasets, capturing the intricate behavior of machines, are meticulously preprocessed to align timestamps and conditions.</p>
+<div class="cell" data-execution_count="1">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="3">
+<div class="cell-output cell-output-display" data-execution_count="5">
+<div>
 
 
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">Timestamp</th>
+<th data-quarto-table-cell-role="th">L_1</th>
+<th data-quarto-table-cell-role="th">L_2</th>
+<th data-quarto-table-cell-role="th">A_1</th>
+<th data-quarto-table-cell-role="th">A_2</th>
+<th data-quarto-table-cell-role="th">B_1</th>
+<th data-quarto-table-cell-role="th">B_2</th>
+<th data-quarto-table-cell-role="th">C_1</th>
+<th data-quarto-table-cell-role="th">C_2</th>
+<th data-quarto-table-cell-role="th">A_3</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">L_4</th>
+<th data-quarto-table-cell-role="th">L_5</th>
+<th data-quarto-table-cell-role="th">L_6</th>
+<th data-quarto-table-cell-role="th">L_7</th>
+<th data-quarto-table-cell-role="th">L_8</th>
+<th data-quarto-table-cell-role="th">L_9</th>
+<th data-quarto-table-cell-role="th">L_10</th>
+<th data-quarto-table-cell-role="th">A_5</th>
+<th data-quarto-table-cell-role="th">B_5</th>
+<th data-quarto-table-cell-role="th">C_5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">0</td>
+<td>0</td>
+<td>-20.470767</td>
+<td>-49.583696</td>
+<td>-49.737023</td>
+<td>-60.125877</td>
+<td>-67.684702</td>
+<td>-67.213115</td>
+<td>-75.635206</td>
+<td>-75.398126</td>
+<td>-45.568737</td>
+<td>...</td>
+<td>-98.610796</td>
+<td>-77.922564</td>
+<td>-65.288020</td>
+<td>-21.577296</td>
+<td>-5.229818</td>
+<td>-20.021259</td>
+<td>-53.399733</td>
+<td>-100.0</td>
+<td>-100.0</td>
+<td>-100.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">1</td>
+<td>1</td>
+<td>-4.874715</td>
+<td>-37.094569</td>
+<td>-25.009528</td>
+<td>-35.579886</td>
+<td>-33.459741</td>
+<td>-35.514754</td>
+<td>-33.369469</td>
+<td>-35.644538</td>
+<td>-51.259983</td>
+<td>...</td>
+<td>-98.610796</td>
+<td>-77.922564</td>
+<td>-59.527626</td>
+<td>-8.114661</td>
+<td>-7.114716</td>
+<td>-4.532685</td>
+<td>-52.568426</td>
+<td>-100.0</td>
+<td>-100.0</td>
+<td>-100.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">2</td>
+<td>2</td>
+<td>25.132878</td>
+<td>-40.673543</td>
+<td>-25.040018</td>
+<td>-35.461876</td>
+<td>-33.527460</td>
+<td>-35.659016</td>
+<td>-33.274612</td>
+<td>-35.644538</td>
+<td>-56.656587</td>
+<td>...</td>
+<td>-98.610796</td>
+<td>-77.922564</td>
+<td>-67.083467</td>
+<td>22.033657</td>
+<td>-17.198404</td>
+<td>25.123377</td>
+<td>-47.439417</td>
+<td>-100.0</td>
+<td>-100.0</td>
+<td>-100.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">3</td>
+<td>3</td>
+<td>-90.508732</td>
+<td>-76.363862</td>
+<td>-25.238204</td>
+<td>-35.592998</td>
+<td>-33.459741</td>
+<td>-35.593443</td>
+<td>-33.396572</td>
+<td>-35.552789</td>
+<td>-52.903776</td>
+<td>...</td>
+<td>-98.610796</td>
+<td>-77.922564</td>
+<td>-98.546543</td>
+<td>-85.325157</td>
+<td>-41.011974</td>
+<td>-91.739428</td>
+<td>-93.192691</td>
+<td>-100.0</td>
+<td>-100.0</td>
+<td>-100.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">4</td>
+<td>4</td>
+<td>-95.641610</td>
+<td>-62.582329</td>
+<td>-24.963793</td>
+<td>-35.488101</td>
+<td>-33.459741</td>
+<td>-35.449180</td>
+<td>-33.369469</td>
+<td>-35.552789</td>
+<td>-56.377452</td>
+<td>...</td>
+<td>-98.610796</td>
+<td>-77.922564</td>
+<td>-82.718820</td>
+<td>-92.213349</td>
+<td>-24.248745</td>
+<td>-96.082302</td>
+<td>-70.919928</td>
+<td>-100.0</td>
+<td>-100.0</td>
+<td>-100.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">5</td>
+<td>5</td>
+<td>-95.641610</td>
+<td>-52.914129</td>
+<td>-24.963793</td>
+<td>-35.474989</td>
+<td>-33.419110</td>
+<td>-35.580328</td>
+<td>-33.342367</td>
+<td>-35.592110</td>
+<td>-53.973792</td>
+<td>...</td>
+<td>-98.610796</td>
+<td>-77.922564</td>
+<td>-82.718820</td>
+<td>-92.213349</td>
+<td>-24.336295</td>
+<td>-96.082302</td>
+<td>-67.704494</td>
+<td>-100.0</td>
+<td>-100.0</td>
+<td>-100.0</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">6</td>
+<td>6</td>
+<td>-99.422931</td>
+<td>-79.731577</td>
+<td>-24.979038</td>
+<td>-35.658559</td>
+<td>-33.513916</td>
+<td>-35.501639</td>
+<td>-33.383021</td>
+<td>-35.618324</td>
+<td>-54.609599</td>
+<td>...</td>
+<td>-98.610796</td>
+<td>-77.922564</td>
+<td>-80.784439</td>
+<td>-93.639475</td>
+<td>-26.154242</td>
+<td>-97.555235</td>
+<td>-64.818446</td>
+<td>-100.0</td>
+<td>-100.0</td>
+<td>-100.0</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">7</td>
+<td>7</td>
+<td>-99.422931</td>
+<td>-79.731577</td>
+<td>-25.161979</td>
+<td>-35.501213</td>
+<td>-33.378479</td>
+<td>-35.475410</td>
+<td>-33.355918</td>
+<td>-56.982764</td>
+<td>-54.547569</td>
+<td>...</td>
+<td>-98.610796</td>
+<td>-77.922564</td>
+<td>-80.784439</td>
+<td>-93.625214</td>
+<td>-25.438393</td>
+<td>-97.555235</td>
+<td>-61.101090</td>
+<td>-100.0</td>
+<td>-100.0</td>
+<td>-100.0</td>
+</tr>
+</tbody>
+</table>
+
+<p>8 rows × 26 columns</p>
+</div>
+</div>
+</div>
+<div class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>exp_names<span class="op">=</span>[all_datasets[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(all_datasets)) <span class="cf">if</span> i <span class="kw">not</span> <span class="kw">in</span> ind]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="feature-selection-unveiling-significance-with-roc-values" class="level1">
+<h1>Feature Selection: Unveiling Significance with ROC Values</h1>
+<p>To identify the most crucial features, we employ a filter method using ROC values. Decision Tree classifiers come into play, predicting machine conditions and ranking features based on univariate ROC values. Filter method of feature selection per feature is employed: build decision tree, predict the target, make prediction rank feature on the basis of machine learning metric (we will use univariate roc values in this problem)</p>
+<div class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we divide total timestamps into four equal parts and label each part to describe the condition of the machine</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> labeler(i):</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> i<span class="op">&lt;=</span> test_df.shape[<span class="dv">0</span>]<span class="op">//</span><span class="dv">4</span>:</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">0</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">elif</span> i<span class="op">&gt;</span>test_df.shape[<span class="dv">0</span>]<span class="op">//</span><span class="dv">4</span> <span class="kw">and</span> i <span class="op">&lt;=</span> <span class="dv">2</span><span class="op">*</span>(test_df.shape[<span class="dv">0</span>]<span class="op">//</span><span class="dv">4</span>):</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>   <span class="cf">return</span> <span class="dv">1</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">elif</span> i <span class="op">&gt;</span> <span class="dv">2</span><span class="op">*</span>(test_df.shape[<span class="dv">0</span>]<span class="op">//</span><span class="dv">4</span>) <span class="kw">and</span> i <span class="op">&lt;=</span> <span class="dv">3</span><span class="op">*</span>(test_df.shape[<span class="dv">0</span>]<span class="op">//</span><span class="dv">4</span>):</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">2</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span>:</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">3</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, test_df <span class="kw">in</span> <span class="bu">enumerate</span>(datasets):</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  test_df[<span class="st">'machine_condition'</span>]<span class="op">=</span>test_df.Timestamp.<span class="bu">apply</span>(labeler)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  col<span class="op">=</span>test_df.pop(<span class="st">'machine_condition'</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  test_df.insert(<span class="dv">1</span>, <span class="st">'machine_condition'</span>, col)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="8">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> train_test_split</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.tree <span class="im">import</span> DecisionTreeClassifier</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score, mean_squared_error</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> roc_scores():</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  X_train, X_test, y_train, y_test<span class="op">=</span>train_test_split(test_df.iloc[:,<span class="dv">2</span>:], test_df[<span class="st">'machine_condition'</span>], train_size<span class="op">=</span><span class="fl">0.8</span>, random_state<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># univariate roc_auc</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  df_roc_values<span class="op">=</span>pd.DataFrame()</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  roc_values <span class="op">=</span> []</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> feature <span class="kw">in</span> X_test.columns:</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># if feature=='L_10':</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    dtc<span class="op">=</span>DecisionTreeClassifier()</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    dtc.fit(X_train[feature].to_frame(), y_train)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    y_pred_prob<span class="op">=</span>dtc.predict_proba(X_test[feature].to_frame())</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">#extracting roc values for multiclass output var</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> class_idx <span class="kw">in</span> <span class="bu">range</span>(y_pred_prob.shape[<span class="dv">1</span>]):</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>      class_roc_scores <span class="op">=</span> []</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>      y_true_class <span class="op">=</span> (y_test <span class="op">==</span> class_idx).astype(<span class="bu">int</span>)  <span class="co"># Convert to binary classification</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>      y_pred_class <span class="op">=</span> y_pred_prob[:, class_idx]</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>      y_true_class <span class="op">=</span> np.array(y_true_class)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>      y_pred_class <span class="op">=</span> np.array(y_pred_class)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>      class_score<span class="op">=</span>roc_auc_score(y_true_class, y_pred_class)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>      class_roc_scores.append(class_score)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>      <span class="co"># print(f"ROC AUC Score for Class {class_idx}: {auc_score}")</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Average ROC AUC score across all classes</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    avg_score <span class="op">=</span> <span class="bu">sum</span>(class_roc_scores) <span class="op">/</span> <span class="bu">len</span>(class_roc_scores)</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    roc_values.append(avg_score)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  roc_values<span class="op">=</span>pd.Series(roc_values)</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> roc_values</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="9">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>df_roc<span class="op">=</span>pd.DataFrame()</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, test_df <span class="kw">in</span> <span class="bu">enumerate</span>(datasets):</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  roc_series<span class="op">=</span>roc_scores()</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  df_roc<span class="op">=</span>pd.concat([df_roc, roc_series], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># print(df_roc)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>df_roc.index<span class="op">=</span>datasets[<span class="dv">0</span>].iloc[:,<span class="dv">2</span>:].columns</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>df_roc.columns<span class="op">=</span>exp_names</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>df_roc <span class="op">=</span> df_roc.T</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>df_roc.head(<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<div>
+
+
+<table class="dataframe table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">L_1</th>
+<th data-quarto-table-cell-role="th">L_2</th>
+<th data-quarto-table-cell-role="th">A_1</th>
+<th data-quarto-table-cell-role="th">A_2</th>
+<th data-quarto-table-cell-role="th">B_1</th>
+<th data-quarto-table-cell-role="th">B_2</th>
+<th data-quarto-table-cell-role="th">C_1</th>
+<th data-quarto-table-cell-role="th">C_2</th>
+<th data-quarto-table-cell-role="th">A_3</th>
+<th data-quarto-table-cell-role="th">A_4</th>
+<th data-quarto-table-cell-role="th">...</th>
+<th data-quarto-table-cell-role="th">L_4</th>
+<th data-quarto-table-cell-role="th">L_5</th>
+<th data-quarto-table-cell-role="th">L_6</th>
+<th data-quarto-table-cell-role="th">L_7</th>
+<th data-quarto-table-cell-role="th">L_8</th>
+<th data-quarto-table-cell-role="th">L_9</th>
+<th data-quarto-table-cell-role="th">L_10</th>
+<th data-quarto-table-cell-role="th">A_5</th>
+<th data-quarto-table-cell-role="th">B_5</th>
+<th data-quarto-table-cell-role="th">C_5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">C11.csv</td>
+<td>0.989719</td>
+<td>0.800622</td>
+<td>0.716381</td>
+<td>0.805171</td>
+<td>0.621604</td>
+<td>0.612124</td>
+<td>0.744775</td>
+<td>0.715891</td>
+<td>0.692415</td>
+<td>0.808485</td>
+<td>...</td>
+<td>0.980403</td>
+<td>0.816665</td>
+<td>0.887565</td>
+<td>0.963003</td>
+<td>0.730728</td>
+<td>0.982077</td>
+<td>0.666120</td>
+<td>0.625770</td>
+<td>0.948750</td>
+<td>0.624316</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">C13-1.csv</td>
+<td>0.989258</td>
+<td>0.835711</td>
+<td>0.629530</td>
+<td>0.790779</td>
+<td>0.805771</td>
+<td>0.766042</td>
+<td>0.547736</td>
+<td>0.768802</td>
+<td>0.642763</td>
+<td>0.707533</td>
+<td>...</td>
+<td>0.887741</td>
+<td>0.985232</td>
+<td>0.774679</td>
+<td>0.635377</td>
+<td>0.548002</td>
+<td>0.911593</td>
+<td>0.677480</td>
+<td>0.670073</td>
+<td>0.665349</td>
+<td>0.659305</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">C14.csv</td>
+<td>0.992529</td>
+<td>0.781165</td>
+<td>0.557617</td>
+<td>0.687565</td>
+<td>0.687223</td>
+<td>0.689019</td>
+<td>0.660716</td>
+<td>0.690027</td>
+<td>0.533338</td>
+<td>0.686555</td>
+<td>...</td>
+<td>0.988066</td>
+<td>0.894792</td>
+<td>0.896809</td>
+<td>0.685654</td>
+<td>0.540606</td>
+<td>0.904820</td>
+<td>0.693794</td>
+<td>0.831570</td>
+<td>0.807473</td>
+<td>0.852070</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">C15.csv</td>
+<td>0.993361</td>
+<td>0.931253</td>
+<td>0.554749</td>
+<td>0.858519</td>
+<td>0.638526</td>
+<td>0.862530</td>
+<td>0.546365</td>
+<td>0.662041</td>
+<td>0.774243</td>
+<td>0.836862</td>
+<td>...</td>
+<td>0.842338</td>
+<td>0.634486</td>
+<td>0.986360</td>
+<td>0.649579</td>
+<td>0.549271</td>
+<td>0.902103</td>
+<td>0.573459</td>
+<td>0.571417</td>
+<td>0.627396</td>
+<td>0.593993</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">C16.csv</td>
+<td>0.992478</td>
+<td>0.842233</td>
+<td>0.874162</td>
+<td>0.840800</td>
+<td>0.605960</td>
+<td>0.840122</td>
+<td>0.879170</td>
+<td>0.707794</td>
+<td>0.858725</td>
+<td>0.817181</td>
+<td>...</td>
+<td>0.950300</td>
+<td>0.795837</td>
+<td>0.942829</td>
+<td>0.653904</td>
+<td>0.537704</td>
+<td>0.926012</td>
+<td>0.575221</td>
+<td>0.704839</td>
+<td>0.627433</td>
+<td>0.703330</td>
+</tr>
+</tbody>
+</table>
+
+<p>5 rows × 25 columns</p>
+</div>
+</div>
+</div>
+<div class="cell" data-execution_count="10">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># selecting features with highest average roc score across all run-to-failure experiments</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df_roc.mean().sort_values(ascending<span class="op">=</span><span class="va">False</span>)[<span class="dv">0</span>:<span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="12">
+<pre><code>L_1    0.993399
+L_9    0.937474
+L_3    0.933457
+L_4    0.927554
+L_6    0.893747
+dtype: float64</code></pre>
+</div>
+</div>
+</section>
+<section id="autoencoder-for-anomaly-detection" class="level1">
+<h1>Autoencoder for Anomaly Detection</h1>
+<p>With selected features in hand, the journey continues into the realm of autoencoders. Utilizing PCA as the foundation, we build an autoencoder to capture the essence of machine behavior.</p>
+<div class="cell" data-execution_count="11">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> StandardScaler</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>ss<span class="op">=</span>StandardScaler()</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, data <span class="kw">in</span> <span class="bu">enumerate</span>(datasets):</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  data.iloc[:,<span class="dv">2</span>:]<span class="op">=</span>ss.fit_transform(data.iloc[:,<span class="dv">2</span>:])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="12">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>datasets_autoencoder<span class="op">=</span>[]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i,data <span class="kw">in</span> <span class="bu">enumerate</span>(datasets):</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  data<span class="op">=</span>data.loc[:,[<span class="st">'Timestamp'</span>,<span class="st">'L_1'</span>,<span class="st">'L_9'</span>,<span class="st">'L_3'</span>,<span class="st">'L_4'</span>,<span class="st">'L_6'</span>]]</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  datasets_autoencoder.append(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="13">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.decomposition <span class="im">import</span> PCA</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>pca <span class="op">=</span> PCA(n_components<span class="op">=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-execution_count="14">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we are not using train test split, because we want the representative data when machine is in best condition</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># so we select first 5% timestamp of every experiments</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>training_data <span class="op">=</span> np.vstack([data.iloc[:<span class="bu">int</span>(<span class="fl">0.05</span> <span class="op">*</span> <span class="bu">len</span>(data)),<span class="dv">1</span>:] <span class="cf">for</span> k,data <span class="kw">in</span> <span class="bu">enumerate</span>(datasets_autoencoder)])</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>transformed_data <span class="op">=</span> pca.fit_transform(training_data)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate reconstruction errors for train_data</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>reconstructed_data <span class="op">=</span> pca.inverse_transform(transformed_data)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>reconstruction_errors <span class="op">=</span> np.mean(np.square(training_data <span class="op">-</span> reconstructed_data), axis <span class="op">=</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="setting-the-anomaly-detection-threshold" class="level1">
+<h1>Setting the Anomaly Detection Threshold</h1>
+<p>A crucial step in anomaly detection involves setting a threshold. We employ quantization errors to establish this threshold, a key parameter in distinguishing normal machine behavior from anomalies.</p>
+<div class="cell" data-execution_count="15">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Setting threshold for anomaly detection, in real-world is set manually based on the previous data of the machines</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>threshold <span class="op">=</span> np.percentile(reconstruction_errors, <span class="fl">99.99</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">'threshold for anomaly detection:'</span>, threshold)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>threshold for anomaly detection: 2.2508852337037824</code></pre>
+</div>
+</div>
+</section>
+<section id="anomaly-detection-in-action" class="level1">
+<h1>Anomaly Detection in Action</h1>
+<p>With the stage set, we deploy our autoencoder on all run-to-failure datasets. The quantization errors are analyzed to pinpoint timestamps where anomalies in machine behavior occur.</p>
+<div class="cell" data-execution_count="16">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, data_set <span class="kw">in</span> <span class="bu">enumerate</span>(datasets_autoencoder):</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">print</span>(<span class="st">'                                                                    '</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">print</span>(<span class="st">'                                                                    '</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="bu">print</span>(<span class="st">'=====================dataset'</span>,exp_names[i],<span class="st">'========================'</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Detect anomalies in new_data</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  transformed_data <span class="op">=</span> pca.fit_transform(data_set.iloc[:,<span class="dv">1</span>:].values)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  new_data_reconstructed <span class="op">=</span> pca.inverse_transform(transformed_data)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  new_data_errors <span class="op">=</span> np.mean(np.square(data_set.iloc[:,<span class="dv">1</span>:].values <span class="op">-</span> new_data_reconstructed), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="co">#print(len(new_data_errors)==data_set.shape[0])</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">print</span>(<span class="st">'timestamp duration: 0 to'</span>, data_set.shape[<span class="dv">0</span>])</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  anomaly_timestamp<span class="op">=</span>[]</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(new_data_errors)):</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> new_data_errors[j] <span class="op">&gt;</span> threshold:</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>      anomaly_timestamp.append(j)</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  plt.plot(<span class="bu">range</span>(<span class="bu">len</span>(data_set.index)), new_data_errors)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  plt.axhline(y<span class="op">=</span>threshold, color<span class="op">=</span><span class="st">'red'</span>, linestyle<span class="op">=</span><span class="st">'--'</span>, label<span class="op">=</span><span class="st">'anomaly_threshold'</span>.<span class="bu">format</span>(threshold))</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  plt.xlabel(<span class="st">'Timestamp'</span>)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  plt.ylabel(<span class="st">'Quantization errors'</span>)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  plt.legend()</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  plt.show()</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="bu">len</span>(anomaly_timestamp)<span class="op">&lt;=</span><span class="dv">1</span>:</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">'No anomaly detected'</span>)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">continue</span></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  <span class="cf">else</span>:</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(anomaly_timestamp)<span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> anomaly_timestamp[k<span class="op">+</span><span class="dv">1</span>]<span class="op">-</span>anomaly_timestamp[k]<span class="op">&lt;=</span><span class="dv">10</span>:</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">'First instance of anomaly detected at Timestamp:'</span>, anomaly_timestamp[k])</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                                    
+                                                                    
+=====================dataset C11.csv ========================
+timestamp duration: 0 to 18429
+No anomaly detected
+                                                                    
+                                                                    
+=====================dataset C13-1.csv ========================
+timestamp duration: 0 to 23670
+First instance of anomaly detected at Timestamp: 18737
+                                                                    
+                                                                    
+=====================dataset C14.csv ========================
+timestamp duration: 0 to 32848
+First instance of anomaly detected at Timestamp: 28477
+                                                                    
+                                                                    
+=====================dataset C15.csv ========================
+timestamp duration: 0 to 30737
+First instance of anomaly detected at Timestamp: 16244
+                                                                    
+                                                                    
+=====================dataset C16.csv ========================
+timestamp duration: 0 to 21021
+No anomaly detected
+                                                                    
+                                                                    
+=====================dataset C7-1.csv ========================
+timestamp duration: 0 to 51671
+First instance of anomaly detected at Timestamp: 31657
+                                                                    
+                                                                    
+=====================dataset C8.csv ========================
+timestamp duration: 0 to 15803
+No anomaly detected
+                                                                    
+                                                                    
+=====================dataset C9.csv ========================
+timestamp duration: 0 to 34245
+First instance of anomaly detected at Timestamp: 13702</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-17-output-2.png" width="576" height="429"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-17-output-3.png" width="589" height="429"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-17-output-4.png" width="589" height="429"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-17-output-5.png" width="576" height="429"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-17-output-6.png" width="589" height="429"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-17-output-7.png" width="576" height="429"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-17-output-8.png" width="592" height="429"></p>
+</div>
+<div class="cell-output cell-output-display">
+<p><img src="index_files/figure-html/cell-17-output-9.png" width="593" height="429"></p>
+</div>
+</div>
+</section>
+<section id="conclusion" class="level1">
+<h1>Conclusion</h1>
+<p>This blog post has navigated through the intricate process of anomaly detection in machine health. From feature selection using ROC values to the implementation of autoencoders and quantization errors, each step contributes to a comprehensive approach in identifying anomalies. The strategies presented here serve as a valuable toolkit for practitioners seeking to enhance machinery monitoring and predictive maintenance in industrial settings.</p>
+
+
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

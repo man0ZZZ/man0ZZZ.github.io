@@ -4,6 +4,8 @@ author: Manoj Subedi
 date: now
 categories:
   - code
+  - anomaly detection
+  - principal component analysis
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'
@@ -17,3 +19,224 @@ jupyter:
     language: python
     name: python3
 ---
+
+# Introduction
+
+In the complex realm of manufacturing, ensuring the continuous health of machinery is paramount. This blog post delves into the realm of anomaly detection within the context of eight run-to-failure experiments from a production plant. The objective is clear: identify anomalies in machine behavior using a strategic combination of feature selection, autoencoder-based clustering, and quantization errors.
+
+# Loading and Preprocessing the Datasets
+
+We with the loading of datasets from eight run-to-failure experiments. These datasets, capturing the intricate behavior of machines, are meticulously preprocessed to align timestamps and conditions.
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+```
+
+```{python}
+#| echo: false
+set_dir='/Users/apolloos/BDS/Capstone project'
+os.chdir(set_dir)
+datasets_dir=os.path.abspath('./datasets')
+datasets_dir
+all_datasets=os.listdir(datasets_dir)
+all_datasets.sort()
+```
+
+```{python}
+#| echo: false
+all_datasets_path=[os.path.join(datasets_dir,f) for f in all_datasets]
+
+datasets_df=[pd.read_csv(f) for f in all_datasets_path]
+datasets_df[0].head(8)
+```
+
+```{python}
+#| echo: false
+##data set 13 and 7 have two files, we will concat two files as they are the data from individual experiment
+#notice two files for C7 (index:6&7) and C13(index:1&2) run to failure exp
+#concat the two data files
+
+datasets=[]
+for f in range(len(datasets_df)):
+  if f==1 or f==6:
+    datasets.append(pd.concat([datasets_df[f],datasets_df[f+1]]))
+  else:
+    datasets.append((datasets_df[f]))
+
+##delete the C7-2 and C13_2 files:
+ind=[2,7]
+datasets=[datasets[i] for i in range(len(datasets)) if i not in ind]
+#print(len(datasets)) ## 8 datasets from 8 run-to-failure experiment
+```
+
+```{python}
+#| echo: false
+for i, test_df in enumerate(datasets):
+  col_names=list(test_df.columns)
+  for i in col_names:
+    test_df[i].fillna(test_df[i].mean(), inplace=True)
+```
+
+```{python}
+exp_names=[all_datasets[i] for i in range(len(all_datasets)) if i not in ind]
+```
+
+# Feature Selection: Unveiling Significance with ROC Values
+
+To identify the most crucial features, we employ a filter method using ROC values. Decision Tree classifiers come into play, predicting machine conditions and ranking features based on univariate ROC values. Filter method of feature selection per feature is employed: build decision tree, predict the target, make prediction rank feature on the basis of machine learning metric (we will use univariate roc values in this problem)
+
+```{python}
+# we divide total timestamps into four equal parts and label each part to describe the condition of the machine
+def labeler(i):
+  if i<= test_df.shape[0]//4:
+    return 0
+  elif i>test_df.shape[0]//4 and i <= 2*(test_df.shape[0]//4):
+   return 1
+  elif i > 2*(test_df.shape[0]//4) and i <= 3*(test_df.shape[0]//4):
+    return 2
+  else:
+    return 3
+for i, test_df in enumerate(datasets):
+  test_df['machine_condition']=test_df.Timestamp.apply(labeler)
+  col=test_df.pop('machine_condition')
+  test_df.insert(1, 'machine_condition', col)
+```
+
+```{python}
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import roc_auc_score, mean_squared_error
+def roc_scores():
+  X_train, X_test, y_train, y_test=train_test_split(test_df.iloc[:,2:], test_df['machine_condition'], train_size=0.8, random_state=0)
+  # univariate roc_auc
+  df_roc_values=pd.DataFrame()
+  roc_values = []
+  for feature in X_test.columns:
+    # if feature=='L_10':
+    dtc=DecisionTreeClassifier()
+    dtc.fit(X_train[feature].to_frame(), y_train)
+    y_pred_prob=dtc.predict_proba(X_test[feature].to_frame())
+
+    #extracting roc values for multiclass output var
+    for class_idx in range(y_pred_prob.shape[1]):
+      class_roc_scores = []
+      y_true_class = (y_test == class_idx).astype(int)  # Convert to binary classification
+      y_pred_class = y_pred_prob[:, class_idx]
+      y_true_class = np.array(y_true_class)
+      y_pred_class = np.array(y_pred_class)
+      class_score=roc_auc_score(y_true_class, y_pred_class)
+      class_roc_scores.append(class_score)
+
+      # print(f"ROC AUC Score for Class {class_idx}: {auc_score}")
+
+    # Average ROC AUC score across all classes
+    avg_score = sum(class_roc_scores) / len(class_roc_scores)
+    roc_values.append(avg_score)
+  roc_values=pd.Series(roc_values)
+  return roc_values
+```
+
+```{python}
+df_roc=pd.DataFrame()
+for i, test_df in enumerate(datasets):
+  roc_series=roc_scores()
+  df_roc=pd.concat([df_roc, roc_series], axis=1)
+  # print(df_roc)
+df_roc.index=datasets[0].iloc[:,2:].columns
+df_roc.columns=exp_names
+df_roc = df_roc.T
+df_roc.head(5)
+```
+
+```{python}
+# selecting features with highest average roc score across all run-to-failure experiments
+df_roc.mean().sort_values(ascending=False)[0:5]
+```
+
+# Autoencoder for Anomaly Detection
+
+With selected features in hand, the journey continues into the realm of autoencoders. Utilizing PCA as the foundation, we build an autoencoder to capture the essence of machine behavior.
+
+```{python}
+from sklearn.preprocessing import StandardScaler
+ss=StandardScaler()
+for i, data in enumerate(datasets):
+  data.iloc[:,2:]=ss.fit_transform(data.iloc[:,2:])
+```
+
+```{python}
+datasets_autoencoder=[]
+for i,data in enumerate(datasets):
+  data=data.loc[:,['Timestamp','L_1','L_9','L_3','L_4','L_6']]
+  datasets_autoencoder.append(data)
+```
+
+```{python}
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2)
+```
+
+```{python}
+# we are not using train test split, because we want the representative data when machine is in best condition
+# so we select first 5% timestamp of every experiments
+training_data = np.vstack([data.iloc[:int(0.05 * len(data)),1:] for k,data in enumerate(datasets_autoencoder)])
+
+transformed_data = pca.fit_transform(training_data)
+
+# Calculate reconstruction errors for train_data
+reconstructed_data = pca.inverse_transform(transformed_data)
+reconstruction_errors = np.mean(np.square(training_data - reconstructed_data), axis = 1)
+```
+
+# Setting the Anomaly Detection Threshold
+
+A crucial step in anomaly detection involves setting a threshold. We employ quantization errors to establish this threshold, a key parameter in distinguishing normal machine behavior from anomalies.
+
+```{python}
+# Setting threshold for anomaly detection, in real-world is set manually based on the previous data of the machines
+threshold = np.percentile(reconstruction_errors, 99.99)
+print('threshold for anomaly detection:', threshold)
+```
+
+# Anomaly Detection in Action
+
+With the stage set, we deploy our autoencoder on all run-to-failure datasets. The quantization errors are analyzed to pinpoint timestamps where anomalies in machine behavior occur.
+
+```{python}
+for i, data_set in enumerate(datasets_autoencoder):
+  print('                                                                    ')
+  print('                                                                    ')
+  print('=====================dataset',exp_names[i],'========================')
+  # Detect anomalies in new_data
+  transformed_data = pca.fit_transform(data_set.iloc[:,1:].values)
+  new_data_reconstructed = pca.inverse_transform(transformed_data)
+  new_data_errors = np.mean(np.square(data_set.iloc[:,1:].values - new_data_reconstructed), axis=1)
+  #print(len(new_data_errors)==data_set.shape[0])
+  print('timestamp duration: 0 to', data_set.shape[0])
+  anomaly_timestamp=[]
+  for j in range(len(new_data_errors)):
+    if new_data_errors[j] > threshold:
+      anomaly_timestamp.append(j)
+
+  plt.plot(range(len(data_set.index)), new_data_errors)
+  plt.axhline(y=threshold, color='red', linestyle='--', label='anomaly_threshold'.format(threshold))
+  plt.xlabel('Timestamp')
+  plt.ylabel('Quantization errors')
+  plt.legend()
+  plt.show()
+  if len(anomaly_timestamp)<=1:
+    print('No anomaly detected')
+    continue
+  else:
+    for k in range(len(anomaly_timestamp)-1):
+      if anomaly_timestamp[k+1]-anomaly_timestamp[k]<=10:
+        print('First instance of anomaly detected at Timestamp:', anomaly_timestamp[k])
+        break
+```
+
+# Conclusion
+
+This blog post has navigated through the intricate process of anomaly detection in machine health. From feature selection using ROC values to the implementation of autoencoders and quantization errors, each step contributes to a comprehensive approach in identifying anomalies. The strategies presented here serve as a valuable toolkit for practitioners seeking to enhance machinery monitoring and predictive maintenance in industrial settings.
