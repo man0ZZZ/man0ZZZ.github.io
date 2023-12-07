@@ -4,6 +4,8 @@ author: Manoj Subedi
 date: now
 categories:
   - code
+  - odds ratio
+  - spam detection
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'
@@ -19,9 +21,11 @@ jupyter:
 ---
 
 # Introduction
+
 In the vast realm of email communication, distinguishing between legitimate (ham) and unwanted (spam) messages is a constant challenge. Leveraging machine learning and statistical analysis, this blog post embarks on a journey to identify crucial keywords that significantly contribute to the categorization of emails. The ultimate goal is to uncover features that enhance the accuracy of models in predicting spam emails.
 
 # Loading and Preprocessing the Email Dataset
+
 Our exploration begins by loading the email dataset and preparing it for analysis. Each email is labeled as either 'ham' or 'spam', and we aim to extract valuable insights from the text content.
 
 ```{python}
@@ -38,6 +42,7 @@ df.head(7)
 ```
 
 # Text Cleaning and Keyword Extraction
+
 To identify important keywords, we perform text cleaning by converting words to lowercase, removing numbers, punctuation, and extra spaces. Additionally, we apply lemmatization to obtain the base form of words and remove common English stop words.
 
 ```{python}
@@ -80,6 +85,7 @@ df.head(5)
 ```
 
 # Frequency Analysis of Keywords
+
 We analyze the frequency of each word and identify a set of highly repeated words. These words serve as potential candidates for contributing to the categorization process.
 
 ```{python}
@@ -127,6 +133,7 @@ df_odds.head(5)
 ```
 
 # Odds Ratio and Significance Testing: A Statistical Lens
+
 Now, we delve into the statistical significance of each keyword using odds ratio and p-values. The odds ratio provides insights into the likelihood of a keyword occurring in spam compared to ham emails. Simultaneously, p-values quantify the evidence against a null hypothesis, helping us assess the significance of the observed differences
 
 ```{python}
@@ -156,6 +163,7 @@ df_odds.head(5)
 ```
 
 # Benjamini-Hochberg Correction and Visualization
+
 The p-value tests the hypothesis that the odds of the keyword occurring in either ham or spam emails are equal (i.e., 1.0). However, the p-values can easily provide misleading results for two reasons: The p-value does not measure the magnitude of the differences and it raises the risk of false positive rate. To address the issue of false positives, we apply the Benjamini-Hochberg correction. We then visualize the results using a volcano plot, highlighting keywords with substantial odds ratios and low corrected p-values.
 
 ```{python}
@@ -180,7 +188,8 @@ plt.show()
 ```
 
 # Final Selection of Keywords
-By setting criteria for importance, we narrow down the selection to keywords with odds ratios greater than 5 and FDR-corrected p-values less than 10^-5. These selected keywords can serve as impactful features for enhancing the accuracy of email categorization models.
+
+By setting criteria for importance, we narrow down the selection to keywords with odds ratios greater than 5 and FDR-corrected p-values less than 10\^-5. These selected keywords can serve as impactful features for enhancing the accuracy of email categorization models.
 
 ```{python}
 df_final = df_odds[(df_odds['Odds_Ratio'] > 5) & (df_odds['FDR_Corrected_P_Value'] < 10**-5)]
@@ -188,5 +197,5 @@ list(df_final['keywords'])
 ```
 
 # Conclusion
-In conclusion, the application of odds ratios and p-values provides a robust statistical foundation for keyword selection. These measures not only quantify the magnitude of differences but also mitigate the risk of false positives. The selected keywords, enriched with statistical significance, can now be employed as powerful features to enhance the accuracy and predictive capabilities of machine learning models in identifying spam emails.
-Source: [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/text-data)
+
+In conclusion, the application of odds ratios and p-values provides a robust statistical foundation for keyword selection. These measures not only quantify the magnitude of differences but also mitigate the risk of false positives. The selected keywords, enriched with statistical significance, can now be employed as powerful features to enhance the accuracy and predictive capabilities of machine learning models in identifying spam emails. Source: [Feature Engineering and Selection: A Practical Approach for Predictive Models](http://www.feat.engineering/text-data)

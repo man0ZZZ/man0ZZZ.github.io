@@ -4,6 +4,7 @@ author: Manoj Subedi
 date: now
 categories:
   - code
+  - classification models
 jupyter:
   jupytext:
     text_representation:

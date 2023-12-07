@@ -32,6 +32,7 @@ We with the loading of datasets from eight run-to-failure experiments. These dat
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 ```
 
 ```{python}
@@ -219,13 +220,14 @@ for i, data_set in enumerate(datasets_autoencoder):
   for j in range(len(new_data_errors)):
     if new_data_errors[j] > threshold:
       anomaly_timestamp.append(j)
-
   plt.plot(range(len(data_set.index)), new_data_errors)
   plt.axhline(y=threshold, color='red', linestyle='--', label='anomaly_threshold'.format(threshold))
   plt.xlabel('Timestamp')
   plt.ylabel('Quantization errors')
+  plt.title('Run-to-failure experiment '+exp_names[i])
   plt.legend()
   plt.show()
+
   if len(anomaly_timestamp)<=1:
     print('No anomaly detected')
     continue

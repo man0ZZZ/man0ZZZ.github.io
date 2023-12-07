@@ -4,6 +4,8 @@ author: Manoj Subedi
 date: now
 categories:
   - code
+  - KMeans
+  - clustering
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'
@@ -19,6 +21,7 @@ jupyter:
 ---
 
 # Introduction
+
 In this blog post, we delve into the fascinating world of clustering to predict smartphone price ranges based on various features. The dataset consists of two parts: the training set (train.csv) containing features and the categorical target variable, "price_range," and the test set (test.csv) lacking the target column. Our objective is to categorize smartphones from the test set into different clusters using the insights gained from the training set. The dataset can be found on [Kaggle](https://www.kaggle.com/datasets/iabhishekofficial/mobile-price-classification/)
 
 ```{python}
@@ -29,6 +32,7 @@ import matplotlib.pyplot as plt
 ```
 
 # Exploring the Datasets
+
 Let's begin by loading the datasets and exploring the first ten rows of the training set to understand the available features.
 
 ```{python}
@@ -43,6 +47,7 @@ df_train.head(10)
 ```
 
 # Feature Engineering: Filtering the Noise
+
 With numerous features at our disposal, the dataset can be noisy, potentially affecting the quality of our clustering. To address this, we employ a simple filter method using ANOVA (Analysis of Variance) to select the most important features.
 
 ```{python}
@@ -89,6 +94,7 @@ selected_features
 ```
 
 # Data Preprocessing: Scaling and Dimensionality Reduction
+
 Before applying clustering algorithms, it's crucial to preprocess the data. We use Min-Max scaling to normalize the selected features and then apply Principal Component Analysis (PCA) for dimensionality reduction.
 
 ```{python}
@@ -107,7 +113,9 @@ df_pca = pd.DataFrame(data=X_pca, columns=['PC1', 'PC2'])
 ```
 
 # Clustering and Evaluation
+
 ## Silhouette Analysis: Understanding Cluster Quality
+
 Silhouette analysis provides insights into the quality and separation of formed clusters. We utilize MiniBatchKMeans and visualize the silhouette scores for different cluster sizes. The code is taken from [Scikit learn](https://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html)
 
 ```{python}
@@ -226,6 +234,7 @@ plt.show()
 ```
 
 ## Elbow Method: Determining Optimal Cluster Count
+
 The Elbow Method aids in finding the optimal number of clusters. We explore the sum of squared distances for different cluster counts to identify the 'elbow' point.
 
 ```{python}
@@ -247,6 +256,7 @@ plt.show()
 ```
 
 ## Yellowbrick Elbow Visualizer: An Alternative Visualization
+
 The Yellowbrick library offers an interactive visualizer to assist in determining the optimal number of clusters.
 
 ```{python}
@@ -260,6 +270,7 @@ warnings.filterwarnings("ignore")
 ```
 
 # Final KMeans Clustering: Bringing It All Together
+
 Having explored and evaluated different aspects, we apply KMeans clustering with the determined optimal number of clusters.
 
 ```{python}

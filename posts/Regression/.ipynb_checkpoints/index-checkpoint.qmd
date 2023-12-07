@@ -1,9 +1,10 @@
 ---
-title: Regression
+title: 'Regression: tweaking model parameter'
 author: Manoj Subedi
 date: now
 categories:
   - code
+  - regression
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'
@@ -20,10 +21,9 @@ jupyter:
 
 # Introduction
 
-Welcome to a hands-on exploration of solving a regression problem using polynomial regression. In this scenario, we're dealing with a classic machine learning problem – predicting salaries based on job levels. The dataset, Position_Salaries.csv, likely includes information about job positions and corresponding salaries.
+Welcome to a hands-on exploration of solving a regression problem using polynomial regression. In this scenario, we're dealing with a classic machine learning problem -- predicting salaries based on job levels. The dataset includes information about hypothetical job positions and corresponding salaries.
 
-Problem Statement:
-The goal here is to build a regression model that accurately predicts salaries. Initially, we attempt a simple linear regression model. However, if the relationship between job levels and salaries is more complex than a straight line, we need a model that can capture these nuances.
+Problem Statement: The goal here is to build a regression model that accurately predicts salaries. Initially, we attempt a simple linear regression model. However, if the relationship between job levels and salaries is more complex than a straight line, we need a model that can capture these nuances.
 
 ```{python}
 import pandas as pd
@@ -38,6 +38,7 @@ df
 ```
 
 # Exploratory Data Analysis:
+
 Before diving into modeling, it's crucial to understand the data. The scatter plot visualizes the relationship between job levels and salaries, offering insights into the potential complexity of the underlying patterns.
 
 ```{python}
@@ -47,6 +48,7 @@ plt.ylabel("Salary")
 ```
 
 # Linear Regression:
+
 To start, we apply a simple linear regression model, assuming a linear relationship between job levels and salaries. The model aims to minimize the difference between actual and predicted salaries.
 
 ```{python}
@@ -59,6 +61,7 @@ lin_reg.fit(X,y)
 ```
 
 # Model evaluation:
+
 We evaluate the performance of the linear regression model using the R-squared metric. A low R-squared value may suggest that a linear model is insufficient for capturing the relationship in the data.
 
 ```{python}
@@ -80,8 +83,8 @@ plt.text(8.5, 0.75, rf'R$^2$: {r_sq:.2f}', fontsize=10, verticalalignment='top')
 ```
 
 # Polynomial Regression and model evaluation:
-Recognizing potential non-linearity, we explore polynomial regression. By transforming our feature variable with different degrees, we can model curved relationships beyond what linear regression allows.
-We evaluate each polynomial regression model, emphasizing the importance of selecting the right degree for the polynomial features. This process allows us to uncover more complex relationships in the data.
+
+Recognizing potential non-linearity, we explore polynomial regression. By transforming our feature variable with different degrees, we can model curved relationships beyond what linear regression allows. We evaluate each polynomial regression model, emphasizing the importance of selecting the right degree for the polynomial features. This process allows us to uncover more complex relationships in the data.
 
 ```{python}
 from sklearn.preprocessing import PolynomialFeatures
@@ -113,6 +116,7 @@ plt.show()
 ```
 
 # Predictions and Plotting:
+
 To conclude, we compare predictions from both linear and polynomial regression models. This not only demonstrates the flexibility of polynomial regression but also highlights the importance of selecting the appropriate model for a given problem.
 
 ```{python}

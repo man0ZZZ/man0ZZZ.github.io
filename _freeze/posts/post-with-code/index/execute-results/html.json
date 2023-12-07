@@ -1,0 +1,11 @@
+{
+  "hash": "3a62cd099333aaa83a93d56e288d5e06",
+  "result": {
+    "markdown": "---\ntitle: Post With Code\nauthor: Manoj Subedi\ndate: '2023-10-11'\ncategories:\n  - news\n  - code\n  - analysis\nimage: image.jpg\n---\n\nThis is a post with executable code. testing!! back to jupterlab\n\n\n```{r}\n1 + 1\n```\n\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

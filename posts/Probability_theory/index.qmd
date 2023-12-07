@@ -4,6 +4,8 @@ author: Manoj Subedi
 date: now
 categories:
   - code
+  - odds ratio
+  - spam detection
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'

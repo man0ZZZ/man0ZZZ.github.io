@@ -4,6 +4,8 @@ author: Manoj Subedi
 date: now
 categories:
   - code
+  - KMeans
+  - clustering
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'
