@@ -1,11 +1,18 @@
 ---
 title: Anomlay detection for a production plant
-author: Manoj Subedi
+author: 
+  - name: Manoj Subedi
+    url: https://man0ZZZ.github.io
 date: now
 categories:
   - code
   - anomaly detection
   - principal component analysis
+format: 
+  html: 
+    mermaid: 
+      theme: default
+    output-file: index.html
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'
