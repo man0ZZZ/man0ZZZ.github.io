@@ -1,0 +1,19 @@
+---
+listing:
+  contents:
+    - Anomaly_detection/*.qmd
+    - Classification/*.qmd
+    - Clustering/*.qmd
+    - Probability_theory/*.qmd
+    - Regression/*.qmd
+  sort: false
+  type: grid
+  categories: true
+  fields: [image, title, description, categories]
+format:
+  html:
+    output-file: index.html
+    code-tools: false
+    link-external-icon: false
+comments: false
+---

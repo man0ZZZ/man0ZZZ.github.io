@@ -1,11 +1,18 @@
 ---
-title: Leveraging Odds Ratios for Advanced Keyword Analysis in Email Categorization
-author: Manoj Subedi
+title: 'Leveraging Odds Ratios for Advanced Keyword Analysis in Email Categorization'
+author: 
+  - name: Manoj Subedi
+    url: https://man0ZZZ.github.io
 date: now
 categories:
   - code
   - odds ratio
   - spam detection
+format: 
+  html: 
+    mermaid: 
+      theme: default
+    output-file: index.html
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'

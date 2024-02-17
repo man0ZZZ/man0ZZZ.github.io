@@ -1,10 +1,17 @@
 ---
 title: 'Regression: tweaking model parameter'
-author: Manoj Subedi
+author: 
+  - name: Manoj Subedi
+    url: https://man0ZZZ.github.io
 date: now
 categories:
   - code
   - regression
+format: 
+  html: 
+    mermaid: 
+      theme: default
+    output-file: index.html
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'

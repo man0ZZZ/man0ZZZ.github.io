@@ -1,11 +1,18 @@
 ---
 title: Clustering Analysis for Smartphone Price Range Prediction
-author: Manoj Subedi
+author: 
+  - name: Manoj Subedi
+    url: https://man0ZZZ.github.io
 date: now
 categories:
   - code
   - KMeans
   - clustering
+format: 
+  html: 
+    mermaid: 
+      theme: default
+    output-file: index.html
 jupyter:
   jupytext:
     formats: 'qmd:quarto,ipynb'

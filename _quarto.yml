@@ -1,22 +1,65 @@
 project:
   type: website
-  output-dir: docs
 
 website:
-  title: "man0ZZZ.github.io"
+  repo-url: https://github.com/man0ZZZ/man0ZZZ.github.io
+  repo-actions: [source]
+  back-to-top-navigation: true
+  page-navigation: true
   navbar:
+    title: Manoj Subedi
     right:
-      - about.qmd
+      - icon: person-circle
+        file: about.qmd
+        text: About
+      - icon: pencil
+        file: posts/blog.qmd
+        text: Blog
       - icon: github
-        href: https://github.com/
-      - icon: twitter
-        href: https://twitter.com
+        href: https://github.com/man0ZZZ
+      - icon: linkedin
+        href: https://linkedin.com/in/manojsubedi987
+      - icon: envelope
+        href: mailto:manojsubedi@vt.edu
+  site-url: https://man0zzz.github.io
+  sidebar:
+    collapse-level: -1
+    search: true
+    sort: order
+    style: floating
+    title: none
+    contents:
+      - text: About
+        file: about.qmd
+      - section: Blog
+        file: posts/blog.qmd
+        contents:
+          - text: "---"
+          - section: Machine Learning
+            href: blog/#category=ml
+            contents:
+              - posts/Anomaly_detection/Anomaly_detection.qmd
+              - posts/Classification/Classification.qmd
+              - posts/Clustering/Clustering.qmd
+              - posts/Probability_theory/Probability_theory.qmd
+              - posts/Regression/Regression.qmd
+      - text: GitHub
+        href: https://github.com/man0ZZZ
+      - text: LinkedIn
+        href: https://linkedin.com/in/manojsubedi987
+      - text: Mail
+        href: mailto:manojsubedi@vt.edu
 format:
   html:
-    theme: cosmo
+    page-layout: full
+    theme:
+      light: [flatly, light.scss]
+      dark: [darkly, dark.scss]
     css: styles.css
-
-editor: visual
+    grid: 
+      sidebar-width: 200px
+      body-width: 1800px
+      margin-width: 300px
 
 execute:
   freeze: true

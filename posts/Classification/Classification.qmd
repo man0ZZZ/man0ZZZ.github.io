@@ -1,10 +1,17 @@
 ---
 title: 'Classification: comparing performance of different classification models'
-author: Manoj Subedi
-date: now
+author: 
+  - name: Manoj Subedi
+    url: https://man0ZZZ.github.io
+date: last-modified
 categories:
   - code
   - classification models
+format: 
+  html: 
+    mermaid: 
+      theme: default
+    output-file: index.html
 jupyter:
   jupytext:
     text_representation:
