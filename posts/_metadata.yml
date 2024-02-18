@@ -3,9 +3,11 @@
 # freeze computational output
 # (see https://quarto.org/docs/projects/code-execution.html#freeze)
 freeze: true
+cache: true
 
 # Enable banner style title blocks
-title-block-banner: false
+title-block-banner: true
+title-block-banner-color: "red"
 lightbox: true
 toc: true
 page-layout: full
@@ -27,3 +29,6 @@ format:
     crossref:
       lst-title: List
       lst-prefix: List
+comments:
+  giscus:
+    repo: maptv/maptv.github.io

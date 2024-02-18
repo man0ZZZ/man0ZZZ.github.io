@@ -44,13 +44,3 @@ jobs:
           target: gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push To GitLab
-        env:
-          token: ${{ secrets.GITLAB_AUTH_TOKEN }}
-        run: |
-          echo Starting to push gh-pages branch to GitLab
-          git config user.name "manoj"
-          git config user.email "manojsubedi987@gmail.com"
-          git remote set-url origin "https://oauth2:${token}@gitlab.com/man0ZZZ/man0ZZZ.gitlab.io"
-          git push origin gh-pages

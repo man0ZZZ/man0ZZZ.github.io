@@ -5,6 +5,7 @@ website:
   repo-url: https://github.com/man0ZZZ/man0ZZZ.github.io
   repo-actions: [source]
   back-to-top-navigation: true
+  reader-mode: true
   page-navigation: true
   navbar:
     title: Manoj Subedi
@@ -63,3 +64,4 @@ format:
 
 execute:
   freeze: true
+  cache: true
